@@ -1,20 +1,20 @@
-# Use official lightweight Python image
-FROM python:3.10-slim
+# Use official PyTorch image (already has torch installed)
+FROM pytorch/pytorch:2.8.0-cpu
 
-# Set working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Copy only requirements first (faster builds)
+# Copy requirements and install extras
 COPY requirements.txt .
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install only extra dependencies, torch is already included in base
+RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
-# Copy the rest of the project files
+# Copy app code
 COPY . .
 
-# Expose Flask default port
+# Expose port for Flask
 EXPOSE 5000
 
-# Run Flask app
+# Run the app
 CMD ["python", "app.py"]
