@@ -1,0 +1,41 @@
+
+templates/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDEs / Editors
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Flask cache / instance
+instance/
+*.db
+*.sqlite3
+
+# Jupyter / notebooks 
+.ipynb_checkpoints/
+
+# Hugging Face cache (models get downloaded automatically)
+~/.cache/
+.huggingface/
+
+# Environment variables
+.env
+templates/index.html
