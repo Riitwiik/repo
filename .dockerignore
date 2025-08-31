@@ -1,10 +1,35 @@
-venv
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.pkl
+
+# Database & logs
 *.db
+*.sqlite3
 *.log
+
+# System files
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# Git & version control
 .git
 .gitignore
+
+# Environment files
+.env
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Docker itself
+Dockerfile
+docker-compose.yml
