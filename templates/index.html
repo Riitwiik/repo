@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Document Summary Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6a4cf5;
+      --primary-hover: #5337d8;
+      --secondary: #0099cc;
+      --secondary-hover: #0082aa;
+      --bg: #f5f6ff;
+      --card-bg: rgba(255,255,255,0.95);
+      --text: #222;
+      --radius: 16px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 30px 20px;
+      max-width: 950px;
+      margin-left: auto;
+      margin-right: auto;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+      position: relative;
+    }
+
+    /* Background graphics */
+    body::before, body::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      z-index: -1;
+    }
+    body::before {
+      width: 300px; height: 300px;
+      top: -100px; left: -100px;
+      background: rgba(106,76,245,0.2);
+    }
+    body::after {
+      width: 250px; height: 250px;
+      bottom: -80px; right: -80px;
+      background: rgba(0,153,204,0.2);
+    }
+
+    h2 {
+      text-align: center;
+      font-weight: 700;
+      margin-bottom: 25px;
+      font-size: 2.2rem;
+      position: relative;
+    }
+    h2 img {
+      width: 40px;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    h3 {
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    h3::before {
+      content: "📌";
+      font-size: 1.1em;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 25px;
+      margin: 20px 0;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Upload Section with animation */
+    #drop-area {
+      border: 2px dashed #bbb;
+      border-radius: var(--radius);
+      padding: 60px 25px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.3s ease, background 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    #drop-area::after {
+      content: "📤";
+      font-size: 2.5em;
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      opacity: 0.2;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    #drop-area.highlight {
+      border-color: var(--primary);
+      background-color: #f1edff;
+    }
+    #drop-area p {
+      font-size: 1.05em;
+      color: #555;
+    }
+    #fileElem { display: none; }
+
+    pre {
+      white-space: pre-wrap;
+      max-height: 280px;
+      overflow-y: auto;
+      background: #f7f7f7;
+      border-radius: 12px;
+      padding: 18px;
+      border: 1px solid #e0e0e0;
+      font-size: 0.95em;
+      line-height: 1.5;
+    }
+
+    select, button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 14px;
+      font-size: 1em;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+    }
+    select {
+      background-color: #fff;
+      border: 1px solid #ddd;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover { background-color: var(--primary-hover); }
+    .btn-primary:active { transform: scale(0.97); }
+
+    .btn-secondary {
+      background-color: var(--secondary);
+      color: white;
+    }
+    .btn-secondary:hover { background-color: var(--secondary-hover); }
+    .btn-secondary:active { transform: scale(0.97); }
+
+    .btn-outline {
+      background: none;
+      border: 2px solid var(--primary);
+      color: var(--primary);
+    }
+    .btn-outline:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    #loading-extract, #loading-summary {
+      text-align: center;
+      margin-top: 15px;
+      color: #777;
+      font-style: italic;
+      display: none;
+    }
+
+    /* Spinner */
+    .spinner {
+      border: 4px solid #eee;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      animation: spin 0.8s linear infinite;
+      margin: 12px auto;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Dark Mode */
+    .dark-mode {
+      --bg: #181818;
+      --card-bg: rgba(30,30,30,0.9);
+      --text: #f2f2f2;
+    }
+    .toggle-dark {
+      position: fixed;
+      top: 20px;
+      right: 25px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2em;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="toggle-dark" onclick="toggleDark()">🌙</div>
+<h2><img src="https://img.icons8.com/color/48/000000/document--v1.png"/> Document Summary Assistant</h2>
+
+<div class="card">
+  <div id="drop-area">
+    <p><strong>Upload your file</strong><br> Drag & drop your PDF/image, or <label for="fileElem" style="color:var(--primary); cursor:pointer; font-weight:600;">browse</label></p>
+    <input type="file" id="fileElem" accept="application/pdf,image/*" />
+  </div>
+  <div id="loading-extract"><div class="spinner" id="spinner-extract"></div><p>Extracting text...</p></div>
+</div>
+
+<div class="card">
+  <h3>Extracted Text</h3>
+  <pre id="extracted-text"></pre>
+</div>
+
+<div class="card">
+  <h3>Summary Options</h3>
+  <select id="summary-length">
+    <option value="short">Short – Key points</option>
+    <option value="medium" selected>Medium – Detailed summary</option>
+    <option value="long">Long – Comprehensive summary</option>
+  </select>
+  <button class="btn-primary" id="btn-summarize">Generate Summary</button>
+  <div id="loading-summary"><div class="spinner" id="spinner-summary"></div><p>Generating summary...</p></div>
+</div>
+
+<div class="card">
+  <h3>Summary</h3>
+  <pre id="summary"></pre>
+  <div class="actions">
+    <button class="btn-secondary" id="btn-download">Download</button>
+    <button class="btn-outline" id="btn-copy">Copy</button>
+  </div>
+</div>
+
+<script>
+  const dropArea = document.getElementById('drop-area');
+  const fileElem = document.getElementById('fileElem');
+  const extractedText = document.getElementById('extracted-text');
+  const summaryText = document.getElementById('summary');
+  const summaryLength = document.getElementById('summary-length');
+  const btnSummarize = document.getElementById('btn-summarize');
+  const btnDownload = document.getElementById('btn-download');
+  const btnCopy = document.getElementById('btn-copy');
+  const loadingExtract = document.getElementById('loading-extract');
+  const loadingSummary = document.getElementById('loading-summary');
+  const spinnerExtract = document.getElementById('spinner-extract');
+  const spinnerSummary = document.getElementById('spinner-summary');
+
+  function preventDefaults(e) {
+    e.preventDefault(); e.stopPropagation();
+  }
+  ['dragenter','dragover','dragleave','drop'].forEach(ev => dropArea.addEventListener(ev, preventDefaults));
+  ['dragenter','dragover'].forEach(ev => dropArea.addEventListener(ev, () => dropArea.classList.add('highlight')));
+  ['dragleave','drop'].forEach(ev => dropArea.addEventListener(ev, () => dropArea.classList.remove('highlight')));
+
+  dropArea.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+  fileElem.addEventListener('change', () => handleFiles(fileElem.files));
+
+  function handleFiles(files) {
+    if (!files.length) return;
+    uploadFile(files[0]);
+  }
+
+  async function uploadFile(file) {
+    extractedText.textContent = "";
+    summaryText.textContent = "";
+    loadingExtract.style.display = "block";
+    spinnerExtract.style.display = "block";
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      loadingExtract.style.display = "none";
+      spinnerExtract.style.display = "none";
+      extractedText.textContent = data.text || "Error: " + (data.error || "Unknown error");
+    } catch (err) {
+      loadingExtract.style.display = "none";
+      spinnerExtract.style.display = "none";
+      extractedText.textContent = "Upload failed: " + err.message;
+    }
+  }
+
+  btnSummarize.onclick = async () => {
+    if (!extractedText.textContent.trim()) { alert("Please upload and extract text first."); return; }
+    summaryText.textContent = "";
+    loadingSummary.style.display = "block";
+    spinnerSummary.style.display = "block";
+    try {
+      const res = await fetch('/summarize', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ text: extractedText.textContent, length: summaryLength.value }),
+      });
+      const data = await res.json();
+      loadingSummary.style.display = "none";
+      spinnerSummary.style.display = "none";
+      summaryText.textContent = data.summary || "Error: " + (data.error || "Unknown error");
+    } catch (err) {
+      loadingSummary.style.display = "none";
+      spinnerSummary.style.display = "none";
+      summaryText.textContent = "Summary failed: " + err.message;
+    }
+  };
+
+  btnDownload.onclick = () => {
+    const text = summaryText.textContent;
+    if (!text.trim()) return alert("No summary available to download.");
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'summary.txt';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  };
+
+  btnCopy.onclick = () => {
+    const text = summaryText.textContent;
+    if (!text.trim()) return alert("No summary available to copy.");
+    navigator.clipboard.writeText(text).then(() => alert("✅ Summary copied to clipboard"));
+  };
+
+  function toggleDark() {
+    document.body.classList.toggle('dark-mode');
+    document.querySelector('.toggle-dark').textContent =
+      document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+  }
+</script>
+
+</body>
+</html>
